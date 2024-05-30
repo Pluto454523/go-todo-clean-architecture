@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    env_file:
+      - .env
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5030:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+#  otel:
+#    image: otel/opentelemetry-collector-contrib:0.95.0
+#    restart: always
+#    volumes:
+#      - ./otel-config.yaml:/etc/otel-config.yaml
+#    command: ["--config", "/etc/otel-config.yaml"]
+#    ports:
+#      - "4317:4317"
+#      - "4318:4318"
+#      - "55679:55679"
+
+  lgtm:
+    image: grafana/otel-lgtm
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "3000:3000"
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
