@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/pluto454523/go-todo-list/cmd/generics_server/config"
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 	"github.com/pluto454523/go-todo-list/internal/interface/fiber_server"
+	sv_config "github.com/pluto454523/go-todo-list/internal/interface/fiber_server/config"
 	"github.com/pluto454523/go-todo-list/internal/repository/task_repository"
 	"github.com/pluto454523/go-todo-list/internal/repository/user_repository"
 	"github.com/pluto454523/go-todo-list/internal/usecases"
@@ -26,32 +28,44 @@ import (
 	"time"
 )
 
-func initRepositories(cfg config.Config) (
+func initEnvironment() config {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed loading .env file: %s", err)
+	}
+
+	var cfg config
+	err = env.Parse(&cfg)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("Error parse env to struct: %s", err)
+	}
+
+	return cfg
+
+}
+
+func initRepositories(cfg config) (
 	repository.TaskRepository,
 	repository.UserRepository,
 ) {
 
-	// Connection string
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s",
-		cfg.DB.Host,
-		cfg.DB.User,
-		cfg.DB.Password,
-		cfg.DB.DBName,
-		cfg.DB.Port,
-		cfg.DB.SSLMode,
-		cfg.DB.TimeZone,
-	)
+	taskRepo := task_repository.NewTaskRepository(setupGorm(postgres.Open(cfg.Services.TaskPostgresqlUri)))
+	userRepo := user_repository.NewUserRepository(setupGorm(postgres.Open(cfg.Services.UserPostgresqlUri)))
 
-	return task_repository.NewTaskRepository(setupGorm(postgres.Open(dsn))),
-		user_repository.NewUserRepository(setupGorm(postgres.Open(dsn)))
+	return taskRepo, userRepo
 }
 
-func initInterface(cfg config.Config, uc *usecases.UsecaseDependency) {
+func initInterface(cfg config, uc *usecases.UsecaseDependency) {
 
 	wg := new(sync.WaitGroup)
 
-	server := fiber_server.New(uc, &cfg)
+	server := fiber_server.New(uc, &sv_config.ServerConfig{
+		AppVersion:    cfg.AppVersion,
+		ListenAddress: fmt.Sprintf(":%d", cfg.Port),
+		RequestLog:    true,
+	})
+
 	log.Info().Msg("Fiber server initialized")
 
 	server.Start(wg)
@@ -61,8 +75,9 @@ func initInterface(cfg config.Config, uc *usecases.UsecaseDependency) {
 	log.Info().Msg("Application stopped")
 }
 
-func initLogger(cfg config.Config) {
-	zerolog.SetGlobalLevel(cfg.Server.LogLevel)
+func initLogger(cfg config) {
+
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 	multi := io.MultiWriter(
 		zerolog.ConsoleWriter{
@@ -70,6 +85,10 @@ func initLogger(cfg config.Config) {
 			TimeFormat: time.RFC3339Nano,
 		},
 	)
+
+	if cfg.Debuglog {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
 
 	log.Logger = zerolog.
 		New(multi).
@@ -80,39 +99,37 @@ func initLogger(cfg config.Config) {
 	log.Info().Msg("Logger initialized.")
 }
 
-func initTracer(cfg config.Config) {
+func initTracer(cfg config) {
+	// tracing is optional
+	// คือหาก trace ใช้งานไม่ได้ระบบควรจะทำงานได้โดยไม่มี ผลกระทบกับระบบหลัก
 
 	client := otlptracegrpc.NewClient(
-		//otlptracegrpc.WithInsecure(), //เพื่อใช้การเชื่อมต่อที่ไม่เข้ารหัส (ไม่แนะนำใน production)
+		otlptracegrpc.WithInsecure(), // เพื่อใช้การเชื่อมต่อที่ไม่เข้ารหัส not recommemded on production
 		otlptracegrpc.WithEndpoint(cfg.Services.OtelGrpcEndpoint),
 	)
 
-	//exporter, err := otlptrace.New(context.Background(), client)
-	ctx := func() context.Context {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) //** ไม่ควรทำ **
-		defer cancel()                                                          // ให้ยกเลิก context เมื่อ main function จบการทำงาน
-		return ctx
-	}
-
-	//traceเป็นoptional
-	exporter, err := otlptrace.New(ctx(), client)
+	// use otlptrace exporter
+	exporter, err := otlptrace.New(context.Background(), client)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("Error init Otlp exporter.")
+		log.Fatal().Err(err).Msg("Error init Otlp exporter")
 	}
 
-	tp := trace.NewTracerProvider(
-		trace.WithBatcher(exporter),
-		trace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceName("todo-list-backend-go"),
-			semconv.ServiceVersion("v1.0.0"),
-			attribute.String("environment", "development"),
-		)),
+	// create new resource with attributes (global)
+	resources := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceName(cfg.AppName),
+		semconv.ServiceVersion(cfg.AppVersion),
+		attribute.String("environment", cfg.Environment),
 	)
 
-	otel.SetTracerProvider(tp)
+	// Create new tracer provider
+	provider := trace.NewTracerProvider(
+		trace.WithBatcher(exporter),
+		trace.WithResource(resources),
+	)
+
+	// Set tracer provider
+	otel.SetTracerProvider(provider)
 
 	log.Info().Msg("Tracer initialized.")
 }

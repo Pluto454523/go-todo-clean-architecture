@@ -164,7 +164,7 @@ func (r TaskRepositoryDependency) DeleteTask(ctx context.Context, id uint) error
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("task not found")
 	}
-	
+
 	if result.Error != nil {
 		return result.Error
 	}

@@ -18,28 +18,25 @@ type TaskEntity struct {
 
 func (task TaskEntity) ChangeStatus(status string) (TaskEntity, error) {
 
-	// Validate parameter
 	if status != "todo" && status != "doing" && status != "done" {
-		return TaskEntity{}, errors.New("can't change to " + status)
+		return TaskEntity{}, errors.New("can't change status")
 	}
 
 	if task.Status == "done" {
-		return TaskEntity{}, errors.New("can't change done status")
+		return TaskEntity{}, errors.New("task is done")
 	}
 
 	if task.Status == status {
-		return TaskEntity{}, errors.New("can't change current status")
+		return TaskEntity{}, errors.New("task already have a status")
 	}
 
 	if status == "done" {
 		if task.Status != "doing" {
-			return TaskEntity{}, errors.New("must change to doing before done")
+			return TaskEntity{}, errors.New("can't change status")
 		}
 	}
 
-	// Business logic
 	task.Status = status
-
 	return task, nil
 }
 

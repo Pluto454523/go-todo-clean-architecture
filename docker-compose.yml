@@ -1,22 +1,29 @@
 version: '3.8'
-
 services:
+
   postgres:
     image: postgres:latest
     container_name: postgres
-    env_file:
-      - .env
+    environment:
+      - POSTGRES_HOSTNAME=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=todo_db
+      - POSTGRES_USER=todo_admin
+      - POSTGRES_PASSWORD=admin0123
+      - POSTGRES_SSLMODE=disable
+      - POSTGRES_TIMEZONE=Asia/Bangkok
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    restart: unless-stopped
+    restart: always
 
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pgadmin
-    env_file:
-      - .env
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=todo888@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=toDo@!888
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     ports:
@@ -25,8 +32,18 @@ services:
       - postgres
     restart: unless-stopped
 
+  otel-lgtm:
+    image: grafana/otel-lgtm
+    container_name: otel-lgtm
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "3000:3000"
+    restart: unless-stopped
+
 #  otel:
 #    image: otel/opentelemetry-collector-contrib:0.95.0
+#    container_name: otel
 #    restart: always
 #    volumes:
 #      - ./otel-config.yaml:/etc/otel-config.yaml
@@ -35,16 +52,35 @@ services:
 #      - "4317:4317"
 #      - "4318:4318"
 #      - "55679:55679"
+#
+#  grafana:
+#    image: grafana/grafana:latest
+#    container_name: grafana
+#    ports:
+#      - "3000:3000"
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#    restart: always
 
-  lgtm:
-    image: grafana/otel-lgtm
+  todo-api:
+    image: nawin3399/go-todo-api
+    container_name: go-todo-api
+    build: .
     ports:
-      - "4317:4317"
-      - "4318:4318"
-      - "3000:3000"
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DATABASE_TASK_POSTGRESQL_URI=postgres://todo_admin:admin@postgres:5432/todo_db?sslmode=disable&timezone=Asia/Bangkok
+      - DATABASE_USER_POSTGRESQL_URI=postgres://todo_admin:admin@postgres:5432/todo_db?sslmode=disable&timezone=Asia/Bangkok
+      - OTEL_GRPC_ENDPOINT=otel:4317
+    depends_on:
+      - postgres
+    restart: unless-stopped
 
 volumes:
   postgres_data:
     driver: local
   pgadmin_data:
     driver: local
+#  grafana_data:
+#    driver: local

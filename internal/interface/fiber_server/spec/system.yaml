@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: System route
+  version: 1.0.0
+paths:
+  /version:
+    get:
+      summary: Get the system version
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /readiness:
+    get:
+      summary: Check system readiness
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal Server Error
+  /liveliness:
+    get:
+      summary: Check system liveliness
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /liveness:
+    get:
+      summary: Check system liveness
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string

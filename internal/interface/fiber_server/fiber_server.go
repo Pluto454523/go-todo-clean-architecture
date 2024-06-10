@@ -3,14 +3,13 @@ package fiber_server
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/pluto454523/go-todo-list/cmd/generics_server/config"
+	"github.com/pluto454523/go-todo-list/internal/interface/fiber_server/config"
 	"github.com/pluto454523/go-todo-list/internal/interface/fiber_server/middleware"
 	"github.com/pluto454523/go-todo-list/internal/interface/fiber_server/route"
 	"github.com/pluto454523/go-todo-list/internal/usecases"
 	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -19,10 +18,10 @@ import (
 type FiberServer struct {
 	useCase *usecases.UsecaseDependency
 	server  *fiber.App
-	config  *config.Config
+	config  *config.ServerConfig
 }
 
-func New(useCase *usecases.UsecaseDependency, cfg *config.Config) *FiberServer {
+func New(uc *usecases.UsecaseDependency, cfg *config.ServerConfig) *FiberServer {
 
 	server := fiber.New(fiber.Config{
 		CaseSensitive:         false,
@@ -31,32 +30,45 @@ func New(useCase *usecases.UsecaseDependency, cfg *config.Config) *FiberServer {
 		ReadTimeout:           30 * time.Second,
 	})
 
-	server.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "*",
-		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-	}))
+	if cfg.CorsAllowAll {
+		server.Use(cors.New(cors.Config{
+			AllowOrigins: "*",
+			AllowHeaders: "*",
+			AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+		}))
+	}
 
 	f := &FiberServer{
-		useCase: useCase,
+		useCase: uc,
 		server:  server,
 		config:  cfg,
 	}
-	// Create a new Fiber instance
-	f.server.Use(middleware.LoggerMiddleware)
-	f.server.Use(middleware.TracerMiddleware)
 
-	// Initialize handler
+	//helper.AddSwaggerUI(server, task_spec.GetSwagger, "/v1")
+
+	if cfg.RequestLog {
+		server.Use(middleware.LoggerMiddleware)
+	}
+
+	server.Use(middleware.TracerMiddleware)
+
+	// Initialize handler and route
 	todoTaskHandler := route.NewTaskHandler(f.useCase)
+	server.Post("/tasks", todoTaskHandler.CreateTask)
+	server.Get("/tasks/:id", todoTaskHandler.GetTaskByID)
+	server.Put("/tasks/:id", todoTaskHandler.UpdateTask)
+	server.Patch("/tasks/:id", todoTaskHandler.PatchTask)
+	server.Delete("/tasks/:id", todoTaskHandler.DeleteTask)
+	server.Get("/tasks", todoTaskHandler.GetAllTask)
+	server.Post("/changestatus/:id", todoTaskHandler.ChangeStatus)
 
-	// Routes
-	f.server.Post("/tasks", todoTaskHandler.CreateTask)
-	f.server.Get("/tasks/:id", todoTaskHandler.GetTaskByID)
-	f.server.Put("/tasks/:id", todoTaskHandler.UpdateTask)
-	f.server.Patch("/tasks/:id", todoTaskHandler.PatchTask)
-	f.server.Delete("/tasks/:id", todoTaskHandler.DeleteTask)
-	f.server.Get("/tasks", todoTaskHandler.GetAllTask)
-	f.server.Post("/changestatus/:id", todoTaskHandler.ChangeStatus)
+	//task_spec.RegisterHandlersWithOptions(
+	//	f.server,
+	//	route.NewRouteTaskV1(uc),
+	//	task_spec.FiberServerOptions{
+	//		BaseURL: "/v1",
+	//	},
+	//)
 
 	return f
 }
@@ -82,11 +94,13 @@ func (f FiberServer) Start(wg *sync.WaitGroup) {
 
 	go func() {
 		defer wg.Done()
-		log.Info().Msg("Server is starting...")
-		err := f.server.Listen(":" + strconv.Itoa(f.config.Server.Port))
+		log.Info().Msgf("Server is starting....%v", f.config.ListenAddress)
+		err := f.server.Listen(f.config.ListenAddress)
+
 		if err != nil {
 			log.Error().Err(err).Msg("Server error")
 		}
+
 		log.Info().Msg("Server has been shutdown")
 	}()
 }

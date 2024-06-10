@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-backend
+  template:
+    metadata:
+      name: todo-backend-pods
+      labels:
+        app: todo-backend
+    spec:
+      containers:
+        - name: todo-backend
+          image: nawin3399/go-todo-api:v2
+          env:
+            - name: APP_NAME
+              value: "todo-backend-go"
+            - name: PORT
+              value: "80"
+            - name: DEBUG_LOG
+              value: "false"
+            - name: ENVIRONMENT
+              value: "development"
+            - name: OTEL_GRPC_ENDPOINT
+              value: "opentelemetry-collector.system-monitor.svc.cluster.local:4317"
+            - name: DATABASE_TASK_POSTGRESQL_URI
+              value: "postgres://todo_admin:admin@postgres-service:5432/todo_db?sslmode=disable&timezone=Asia/Bangkok"
+            - name: DATABASE_USER_POSTGRESQL_URI
+              value: "postgres://todo_admin:admin@postgres-service:5432/todo_db?sslmode=disable&timezone=Asia/Bangkok"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-backend-service
+spec:
+  type: ClusterIP
+  selector:
+    app: todo-backend
+  ports:
+    - port: 80
+      targetPort: 80
