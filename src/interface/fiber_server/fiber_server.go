@@ -3,10 +3,10 @@ package fiber_server
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/pluto454523/go-todo-list/internal/interface/fiber_server/config"
-	"github.com/pluto454523/go-todo-list/internal/interface/fiber_server/middleware"
-	"github.com/pluto454523/go-todo-list/internal/interface/fiber_server/route"
-	"github.com/pluto454523/go-todo-list/internal/usecases"
+	"github.com/pluto454523/go-todo-list/src/interface/fiber_server/config"
+	"github.com/pluto454523/go-todo-list/src/interface/fiber_server/middleware"
+	"github.com/pluto454523/go-todo-list/src/interface/fiber_server/route/task"
+	"github.com/pluto454523/go-todo-list/src/usecases"
 	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
@@ -53,7 +53,7 @@ func New(uc *usecases.UsecaseDependency, cfg *config.ServerConfig) *FiberServer 
 	server.Use(middleware.TracerMiddleware)
 
 	// Initialize handler and route
-	todoTaskHandler := route.NewTaskHandler(f.useCase)
+	todoTaskHandler := task_spec.NewTaskHandler(f.useCase)
 	server.Post("/tasks", todoTaskHandler.CreateTask)
 	server.Get("/tasks/:id", todoTaskHandler.GetTaskByID)
 	server.Put("/tasks/:id", todoTaskHandler.UpdateTask)

@@ -14,7 +14,7 @@ import (
 	"github.com/deepmap/oapi-codegen/v2/pkg/util"
 )
 
-const yamlFiles = "./internal/interface/fiber_server/spec/*.yaml"
+const yamlFiles = "./src/interface/fiber_server/route/*/openapi.yaml"
 
 func generateHTTPFiber() error {
 	files, err := filepath.Glob(yamlFiles)
@@ -23,13 +23,10 @@ func generateHTTPFiber() error {
 	}
 
 	for _, file := range files {
-		filename := filepath.Base(file[:len(file)-len(filepath.Ext(file))])
-		packageName := sanitizePackageName(filename) + "_spec"
-		outputPath := fmt.Sprintf("./internal/interface/fiber_server/spec/%s/spec.gen.go", filename)
-
-		if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
-			return err
-		}
+		dir := filepath.Dir(file)
+		folderName := filepath.Base(dir)
+		packageName := sanitizePackageName(folderName)
+		outputPath := fmt.Sprintf("%s/spec.gen.go", dir)
 
 		swagger, err := util.LoadSwaggerWithCircularReferenceCount(file, 3)
 		if err != nil {
@@ -53,7 +50,7 @@ func generateHTTPFiber() error {
 			return err
 		}
 
-		//	 Write to file `{{outputPath}}/spec.gen.go`
+		//	 Write to file `{{outputPath}}/route.gen.go`
 		if err := os.WriteFile(outputPath, []byte(gen), 0644); err != nil {
 			return err
 		}

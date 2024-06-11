@@ -2,7 +2,7 @@ package task_repository
 
 import (
 	"fmt"
-	"github.com/pluto454523/go-todo-list/internal/usecases/repository"
+	"github.com/pluto454523/go-todo-list/src/usecases/repository"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

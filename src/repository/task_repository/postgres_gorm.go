@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/pluto454523/go-todo-list/internal/entity/task"
-	"github.com/pluto454523/go-todo-list/internal/repository/migrations"
-	"github.com/pluto454523/go-todo-list/internal/usecases/repository"
+	"github.com/pluto454523/go-todo-list/src/entity/task"
+	"github.com/pluto454523/go-todo-list/src/repository/migrations"
+	"github.com/pluto454523/go-todo-list/src/usecases/repository"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )

@@ -2,8 +2,8 @@ package usecases
 
 import (
 	"context"
-	"github.com/pluto454523/go-todo-list/internal/entity/task"
-	"github.com/pluto454523/go-todo-list/internal/usecases/repository"
+	"github.com/pluto454523/go-todo-list/src/entity/task"
+	"github.com/pluto454523/go-todo-list/src/usecases/repository"
 	"go.opentelemetry.io/otel/attribute"
 )
 

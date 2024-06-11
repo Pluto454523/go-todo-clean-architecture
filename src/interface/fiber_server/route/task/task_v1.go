@@ -1,9 +1,9 @@
-package route
+package task_spec
 
 import (
-	"github.com/pluto454523/go-todo-list/internal/entity/task"
-	"github.com/pluto454523/go-todo-list/internal/usecases"
-	"github.com/pluto454523/go-todo-list/internal/usecases/model"
+	"github.com/pluto454523/go-todo-list/src/entity/task"
+	"github.com/pluto454523/go-todo-list/src/usecases"
+	"github.com/pluto454523/go-todo-list/src/usecases/model"
 	"strconv"
 	"time"
 

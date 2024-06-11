@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/pluto454523/go-todo-list/internal/usecases"
+	"github.com/pluto454523/go-todo-list/src/usecases"
 )
 
 type config struct {

@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/pluto454523/go-todo-list/internal/entity/task"
-	"github.com/pluto454523/go-todo-list/internal/entity/user"
+	"github.com/pluto454523/go-todo-list/src/entity/task"
+	"github.com/pluto454523/go-todo-list/src/entity/user"
 	"golang.org/x/net/context"
 )
 

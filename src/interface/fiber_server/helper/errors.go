@@ -1,6 +1,6 @@
 package helper
 
-import "github.com/pluto454523/go-todo-list/internal/usecases/model"
+import "github.com/pluto454523/go-todo-list/src/usecases/model"
 
 type SetError struct {
 	Code    int16

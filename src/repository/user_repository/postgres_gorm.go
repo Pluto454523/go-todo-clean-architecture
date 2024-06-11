@@ -1,9 +1,9 @@
 package user_repository
 
 import (
-	"github.com/pluto454523/go-todo-list/internal/entity/user"
-	"github.com/pluto454523/go-todo-list/internal/repository/migrations"
-	"github.com/pluto454523/go-todo-list/internal/usecases/repository"
+	"github.com/pluto454523/go-todo-list/src/entity/user"
+	"github.com/pluto454523/go-todo-list/src/repository/migrations"
+	"github.com/pluto454523/go-todo-list/src/usecases/repository"
 	"log"
 
 	"gorm.io/gorm"
