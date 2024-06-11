@@ -1,0 +1,453 @@
+openapi: 3.0.0
+info:
+  title: Demo API
+  description: Demo API for the OpenAPI documentation.
+  version: 0.0.0
+tags: []
+paths:
+  /company/{company_id}/store:
+    post:
+      operationId: CompanyStore_createStore
+      description: Create a new store, to be managed by the company.
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: string
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: string
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: string
+                  - $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStoreRequest'
+    get:
+      operationId: CompanyStore_listStores
+      description: List all stores managed by the company.
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/StoreModel'
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/StoreModel'
+                  - $ref: '#/components/schemas/ErrorResponse'
+  /order:
+    get:
+      operationId: Order_getOrder
+      description: Get a list of orders, with dynamic filtering.
+      parameters:
+        - name: product_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: store_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: offset
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/OrderResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/OrderResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/OrderResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+  /store:
+    get:
+      operationId: Store_listStores
+      description: Get a list of stores that the user has access to.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/StoreModel'
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/StoreModel'
+                  - $ref: '#/components/schemas/ErrorResponse'
+  /store/{store_id}/order:
+    post:
+      operationId: StoreOrder_createOrder
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: string
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: string
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - type: string
+                  - $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+    get:
+      operationId: StoreOrder_listOrders
+      parameters:
+        - name: store_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/OrderListResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/OrderListResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
+security:
+  - ApiKeyAuth: []
+components:
+  schemas:
+    Address:
+      type: object
+      required:
+        - street_address
+        - sub_district
+        - district
+        - province
+        - postal_code
+        - country
+      properties:
+        street_address:
+          type: string
+        sub_district:
+          type: string
+        district:
+          type: string
+        province:
+          type: string
+        postal_code:
+          type: string
+        country:
+          type: string
+    CreateStoreRequest:
+      type: object
+      required:
+        - provider_code
+        - company_id
+        - name
+        - code
+        - address
+        - tax_information
+      properties:
+        provider_code:
+          type: string
+        company_id:
+          type: string
+        name:
+          type: string
+        code:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        tax_information:
+          $ref: '#/components/schemas/TaxInformation'
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - error_code
+        - issue_id
+      properties:
+        error:
+          type: string
+        error_code:
+          type: string
+        issue_id:
+          type: string
+    OrderItem:
+      type: object
+      required:
+        - price
+        - qty
+        - product_id
+      properties:
+        price:
+          type: number
+          format: double
+        qty:
+          type: integer
+          format: int32
+        product_id:
+          type: string
+    OrderItemWithProduct:
+      type: object
+      required:
+        - price
+        - qty
+        - product
+      properties:
+        price:
+          type: number
+          format: double
+        qty:
+          type: integer
+          format: int32
+        product:
+          $ref: '#/components/schemas/Product'
+    OrderListResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+        total:
+          type: integer
+          format: int32
+    OrderRequest:
+      type: object
+      required:
+        - id
+        - order_number
+        - store_id
+        - provider_code
+        - flow
+        - state
+        - items
+      properties:
+        id:
+          type: string
+        order_number:
+          type: string
+        store_id:
+          type: string
+        provider_code:
+          type: string
+        flow:
+          type: string
+        state:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    OrderResponse:
+      type: object
+      required:
+        - id
+        - order_number
+        - store_id
+        - provider_code
+        - flow
+        - state
+        - items
+      properties:
+        id:
+          type: string
+        order_number:
+          type: string
+        store_id:
+          type: string
+        provider_code:
+          type: string
+        flow:
+          type: string
+        state:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemWithProduct'
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - images
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        images:
+          type: array
+          items:
+            type: string
+    StoreModel:
+      type: object
+      required:
+        - id
+        - provider_code
+        - company_id
+        - name
+        - code
+        - address
+        - tax_information
+      properties:
+        id:
+          type: string
+        provider_code:
+          type: string
+        company_id:
+          type: string
+        name:
+          type: string
+        code:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        tax_information:
+          $ref: '#/components/schemas/TaxInformation'
+    TaxInformation:
+      type: object
+      required:
+        - full_name
+        - tax_id
+        - address
+      properties:
+        full_name:
+          type: string
+        tax_id:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-USER-ID

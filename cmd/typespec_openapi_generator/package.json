@@ -1,0 +1,13 @@
+{
+  "name": "typespec_openapi_generator",
+  "main": "main.tsp",
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@typespec/compiler": "~0.55.0",
+    "@typespec/http": "~0.55.0",
+    "@typespec/rest": "~0.55.0",
+    "@typespec/openapi3": "~0.55.0"
+  },
+  "private": true
+}

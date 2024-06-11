@@ -1,0 +1,13 @@
+services:
+  generator:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
+    entrypoint:
+      - tsp
+      - compile
+      - .
+      - --emit
+      - "@typespec/openapi3"
